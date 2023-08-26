@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: convert-to-dpfm-orders-from-sme-edi-order
+  name: convert-to-dpfm-orders-from-sme-edi-order
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: convert-to-dpfm-orders-from-sme-edi-order
+      app: FUNCTION_CONVERT_TO_DPFM_ORDERS_FROM_SME_EDI_ORDER
+  template:
+    metadata:
+      labels:
+        run: convert-to-dpfm-orders-from-sme-edi-order
+        app: FUNCTION_CONVERT_TO_DPFM_ORDERS_FROM_SME_EDI_ORDER
+    spec:
+      nodeName: worker
+      hostname: convert-to-dpfm-orders-from-sme-edi-order
+      containers:
+        - name: convert-to-dpfm-orders-from-sme-edi-order
+          image: latonaio/convert-to-dpfm-orders-from-sme-edi-order
+          imagePullPolicy: Always
+          env:
+            - name: "RMQ_QUEUE_FROM"
+              value: "convert-to-dpfm-orders-from-sme-edi-order-queue"
+            - name: "RMQ_QUEUE_TO"
+              value: "data-platform-api-data-concatenation-queue"
+            - name : "NESTJS_DATA_CONNECTION_REQUEST_CONTROL_MANAGER_CONSUME"
+              value: "nestjs-data-connection-request-control-manager-consume"
+            - name: "MYSQL_DB_NAME"
+              value: "DataPlatformMastersAndTransactionsMysqlKube"
+          envFrom:
+            - configMapRef:
+                name: env-config
+            - secretRef:
+                name: env-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: convert-to-dpfm-orders-from-sme-edi-order
+  name: convert-to-dpfm-orders-from-sme-edi-order
+spec:
+  selector:
+    run: convert-to-dpfm-orders-from-sme-edi-order
+  type: NodePort
+  ports:
+    - name: api
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+      nodePort: 30905
